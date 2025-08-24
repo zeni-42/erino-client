@@ -11,8 +11,8 @@ export default function Navbar(){
         <>
         <div className="w-full h-16 flex justify-between items-center bg-white border-b border border-orange-700/15 px-96">
             <div className="flex justify-start items-center space-x-3" >
-                <span className="size-10 flex justify-center items-center bg-gradient-to-bl from-amber-600 via-orange-500 to-orange-600 rounded-md text-white" >
-                    <Shapes />
+                <span className="size-8 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center text-white" >
+                    <Shapes className="size-5" />
                 </span>
                 <h1 className="text-xl font-bold" >
                     LMS
