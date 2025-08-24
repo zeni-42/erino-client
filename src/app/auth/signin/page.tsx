@@ -1,6 +1,6 @@
 "use client"
 
-import { AlertCircle, ArrowLeft, CheckCircle, Eye, EyeOff, Loader2, Mail, Shapes } from "lucide-react"
+import { AlertCircle, ArrowLeft, CheckCircle, Eye, EyeOff, Loader2, Shapes } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { useForm } from "react-hook-form"
@@ -38,6 +38,7 @@ export default function Signin(){
                 withCredentials: true
             })
             if (res.status == 200) {
+                localStorage.setItem("firstName", res.data.data?.first_name)
                 router.push('/dashboard')
                 reset()
             }

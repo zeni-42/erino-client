@@ -1,7 +1,10 @@
+"use client"
+
 export default function Page(){
+
     return(
         <>
-        src/app/dashboard
+            Dashboard
         </>
     )
 }

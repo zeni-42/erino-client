@@ -15,7 +15,7 @@ import { toast } from "sonner"
 
 const signUpSchema = z.object({
     firstName: z.string().min(1, "First name cannot be empty"),
-    lastName: z.string().min(1, "First name cannot be empty"),
+    lastName: z.string().min(1, "Last name cannot be empty"),
     email: z.string().email("Please enter a valid email address"),
     password: z.string().min(6, "Password must be at least 6 characters")
     }
@@ -40,10 +40,10 @@ export default function Signin(){
                 last_name: data?.lastName,
                 email: data?.email,
                 password: data?.password,
-            }, {
-                withCredentials: true
+            }, 
+            {
+                withCredentials: true,
             })
-            console.log(res);
             if (res.status == 201) {
                 router.push('/auth/signin')
                 reset()
