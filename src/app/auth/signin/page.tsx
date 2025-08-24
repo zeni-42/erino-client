@@ -34,18 +34,26 @@ export default function Signin(){
     const onSubmit = async (data: signUpFormData) => {
         setIsLoading(true)
         try {
-            const res = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/leads/login`, data, {
+            const res = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/user/login`, data, {
                 withCredentials: true
             })
             if (res.status == 200) {
-                localStorage.setItem("firstName", res.data.data?.first_name)
+                localStorage.setItem("fullName", res.data.data?.fullName)
                 router.push('/dashboard')
                 reset()
             }
         } catch (error: unknown) {
             if (isAxiosError(error)) {
-                const errMsg = error.response?.data?.message
-                toast.error(errMsg || "Server error")
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(error.request.response, "text/html");
+                const preElement = doc.querySelector("pre");
+                let preText = "No error details found";
+                
+                if (preElement) {
+                    preText = preElement.innerHTML.split("<br>")[0];
+                }
+
+                toast.error(preText || "Server error")
             } else {
                 toast.error("Server error")
             }

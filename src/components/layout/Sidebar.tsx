@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import axios, { isAxiosError } from "axios"
-import { BarChart3, LogOut, Settings, Shapes, Target, TrendingUp, Users, X } from "lucide-react"
+import { BarChart3, LogOut, Settings, Shapes, Target, TrendingUp, Users } from "lucide-react"
 import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
@@ -42,9 +42,10 @@ export default function Sidebar(){
 
     const handleLogout = async () => {
         try {
-            const res = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/leads/logout`, null, { 
+            const res = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/user/logout`, null, { 
                 withCredentials: true
             })
+            console.log(res);
             if (res.status == 200) {
                 router.push("/auth/signin")
                 localStorage.clear()
@@ -60,7 +61,7 @@ export default function Sidebar(){
     }
 
     useEffect(() => {
-        const storedname = localStorage.getItem("firstName")
+        const storedname = localStorage.getItem("fullName")
         if (!storedname){
             toast.info("no name found")
             return

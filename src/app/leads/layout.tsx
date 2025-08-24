@@ -5,10 +5,10 @@ export default function LeadLayout({ children }: { children: React.ReactNode }){
     return(
         <>
         <div className="flex" >
-            <aside>
+            <aside className="fixed top-0" >
                 <Sidebar />
             </aside>
-            <main className="p-7" >
+            <main className="ml-64 w-[calc(100vw-16rem)]" >
                 {children}
             </main>
         </div>

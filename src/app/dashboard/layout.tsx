@@ -3,11 +3,11 @@ import Sidebar from "@/components/layout/Sidebar";
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
     return (
         <>
-        <div className="flex">
-            <aside>
+        <div className="flex" >
+            <aside className="fixed top-0" >
                 <Sidebar />
             </aside>
-            <main className="p-7" >
+            <main className="ml-64 w-[calc(100vw-16rem)]" >
                 {children}
             </main>
         </div>
