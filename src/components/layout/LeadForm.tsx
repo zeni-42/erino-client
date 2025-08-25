@@ -25,6 +25,7 @@ const formDataASchema = z.object({
     status: z.enum(["new", "contacted", "qualified", "lost", "won"]),
     score: z.string().optional(),
     leadValue: z.string().optional(),
+    lastActivityAt: z.date().optional(),
     isQualified: z.boolean().default(false).optional()
 })
 
@@ -46,7 +47,6 @@ export default function Leadform({ onClose }: LeadFormInterface ){
         setIsLoading(true)
         try {
             const res = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/leads`, data, { withCredentials: true })
-            console.log(res);
             if (res.status == 201) {
                 toast.success("Lead added")
             }
@@ -74,7 +74,7 @@ export default function Leadform({ onClose }: LeadFormInterface ){
 
     return (
         <>
-        <div className="absolute top-0 left-64 w-[calc(100vw-16rem)] h-screen z-10 bg-white p-7" >
+        <div className="fixed top-0 left-64 w-[calc(100vw-16rem)] h-screen z-10 bg-white p-7 overflow-y-hidden" >
             <div className="flex justify-between items-center">
                 <div className="flex justify-center items-start flex-col space-y-1" >
                     <h1 className="text-2xl font-medium text-zinc-700">Register new lead</h1>
@@ -89,29 +89,31 @@ export default function Leadform({ onClose }: LeadFormInterface ){
                 <form onSubmit={handleSubmit(handleAddLead)} className="w-full px-10 " >
                     <div className="w-full flex justify-center items-center mb-10 gap-20 " >
                         <div className="space-y-4 flex flex-col w-1/2">
-                            <div>
-                                <Label className="text-sm font-medium text-gray-700 pb-1.5" >
-                                    First Name
-                                </Label>
-                                <Input {...register("firstName")} autoComplete="off" placeholder="e.g. Amitab" />
-                                    {errors.firstName && (
-                                        <p className="mt-1 text-sm text-red-600 flex items-center">
-                                            <AlertCircle className="w-4 h-4 mr-1" />
-                                            {errors.firstName.message}
-                                        </p>
-                                    )}
-                            </div>
-                            <div>
-                                <Label className="text-sm font-medium text-gray-700 pb-1.5" >
-                                    Last Name
-                                </Label>
-                                <Input {...register("lastName")} autoComplete="off" placeholder="e.g. Dutta" />
-                                    {errors.lastName && (
-                                        <p className="mt-1 text-sm text-red-600 flex items-center">
-                                            <AlertCircle className="w-4 h-4 mr-1" />
-                                            {errors.lastName.message}
-                                        </p>
-                                    )}
+                            <div className="w-full flex space-x-5" >
+                                <div className="w-full" >
+                                    <Label className="text-sm font-medium text-gray-700 pb-1.5" >
+                                        First Name
+                                    </Label>
+                                    <Input {...register("firstName")} autoComplete="off" placeholder="e.g. Amitab" />
+                                        {errors.firstName && (
+                                            <p className="mt-1 text-sm text-red-600 flex items-center">
+                                                <AlertCircle className="w-4 h-4 mr-1" />
+                                                {errors.firstName.message}
+                                            </p>
+                                        )}
+                                </div>
+                                <div className="w-full" >
+                                    <Label className="text-sm font-medium text-gray-700 pb-1.5" >
+                                        Last Name
+                                    </Label>
+                                    <Input {...register("lastName")} autoComplete="off" placeholder="e.g. Dutta" />
+                                        {errors.lastName && (
+                                            <p className="mt-1 text-sm text-red-600 flex items-center">
+                                                <AlertCircle className="w-4 h-4 mr-1" />
+                                                {errors.lastName.message}
+                                            </p>
+                                        )}
+                                </div>
                             </div>
                             <div>
                                 <Label className="text-sm font-medium text-gray-700 pb-1.5" >
@@ -161,8 +163,6 @@ export default function Leadform({ onClose }: LeadFormInterface ){
                                         </p>
                                     )}
                             </div>
-                        </div>
-                        <div className="space-y-4 flex flex-col w-1/2" >
                             <div>
                                 <Label className="text-sm font-medium text-gray-700 pb-1.5" >
                                     State
@@ -175,6 +175,8 @@ export default function Leadform({ onClose }: LeadFormInterface ){
                                         </p>
                                     )}
                             </div>
+                        </div>
+                        <div className="space-y-4 flex flex-col w-1/2" >
                             <div>
                                 <Label className="text-sm font-medium text-gray-700 pb-1.5" >
                                     Source
@@ -282,8 +284,29 @@ export default function Leadform({ onClose }: LeadFormInterface ){
                                         </p>
                                     )}
                             </div>
-                            <div className="w-full flex justify-between items-center" >
-                                <Label className="text-sm font-medium text-gray-700 pb-1.5" >
+                            <div>
+                                <Controller control={control} name="lastActivityAt" render={({ field }) => (
+                                    <div>
+                                    <Label className="text-sm font-medium text-gray-700 pb-1.5">
+                                        Last Activity At
+                                    </Label>
+                                    <Input
+                                        type="date"
+                                        value={field.value ? new Date(field.value).toISOString().split("T")[0] : ""}
+                                        onChange={(e) => field.onChange(e.target.value ? new Date(e.target.value) : undefined)}
+                                    />
+                                    {errors.lastActivityAt && (
+                                        <p className="mt-1 text-sm text-red-600 flex items-center">
+                                        <AlertCircle className="w-4 h-4 mr-1" />
+                                        {errors.lastActivityAt.message}
+                                        </p>
+                                    )}
+                                    </div>
+                                )}
+                                />
+                            </div>
+                            <div className="w-full flex justify-between items-center border border-zinc-500/20 rounded-md h-10 px-2" >
+                                <Label className="text-sm font-medium text-gray-700" >
                                     Qualified
                                 </Label>
                                 <Controller control={control} name="isQualified" render={({ field }) => (

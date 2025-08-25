@@ -1,14 +1,16 @@
 "use client"
 
+import FilterForm from "@/components/layout/FilterForm";
 import Leadform from "@/components/layout/LeadForm";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import axios, { isAxiosError } from "axios";
-import { Download, Plus } from "lucide-react";
+import { Delete, Filter, MenuIcon, Pencil, Plus, RefreshCcw, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { fa } from "zod/v4/locales";
 
 type Lead = {
     _id: string,
@@ -29,23 +31,111 @@ type Lead = {
 export default function Lead(){
     const [showForm, setShowForm] = useState(false)
     const [leads, setLeads] = useState<Lead[]>([])
-    const [currentPage, setCurrentPage] = useState(1)
-    const [totalPages, setTotalPages] = useState(1)
+    const [total, setTotal] = useState(0)
+    const [totalPages, setTotalPages] = useState(0)
+    const [page, setPage] = useState(0)
+    const [limit, setLimit] = useState(20)
+    const [isLoading, setIsLoading] = useState(false)
+    const [search, setSearch] = useState("")
+    const [showFilter, setShowFilter] = useState(false)
+    const [showFooter, setShowFooter ] = useState(true)
+    const [showEditForm, setShowEditForm] = useState(false)
 
-    const getLeads = async (page: number = 1) => {
+    const getLeads = async (page: number) => {
+        setIsLoading(true)
         try {
             if (!page) {
                 page = 1
             }
-            const res = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/leads?page=${page}`, { withCredentials: true })
+            const res = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/leads?page=${page}&limit=${limit}`, { withCredentials: true })
             if (res.status == 200) {
-                console.log(res?.data?.data);
                 setLeads(res.data?.data?.data)
                 setTotalPages(res?.data?.data?.totalPages || 1)
-                setCurrentPage(res.data?.page || page)
-
+                setPage(res.data?.data?.page)
+                setTotal(res.data?.data?.total)
             }
         } catch (error) {
+            if (isAxiosError(error)) {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(error.request.response, "text/html");
+                const preElement = doc.querySelector("pre");
+                let preText = "No error details found";
+                
+                if (preElement) {
+                    preText = preElement.innerHTML.split("<br>")[0];
+                }
+
+                toast.error(preText || "Server error")
+            } else {
+                toast.error("Server error")
+            }
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    const handleDeleteRecord = async (leadId: string) => {
+        try {
+            const res = await axios.delete(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/leads/${leadId}`, { withCredentials: true })
+            if (res.status == 200) {
+                console.log(res);
+                toast.success("Record removed")
+            }
+        } catch (error) {
+            if (isAxiosError(error)) {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(error.request.response, "text/html");
+                const preElement = doc.querySelector("pre");
+                let preText = "No error details found";
+                
+                if (preElement) {
+                    preText = preElement.innerHTML.split("<br>")[0];
+                }
+
+                toast.error(preText || "Server error")
+            } else {
+                toast.error("Server error")
+            }
+        } finally {
+            getLeads(1)
+        }
+    }
+
+    const handleSearchQuery = async (keyword: string) => {
+        setShowFooter(false)
+        setIsLoading(true)
+        try {
+            const res = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/leads/query?q=${keyword}`, { withCredentials: true })
+            setLeads(res?.data?.data)
+        } catch (error) {
+            if (isAxiosError(error)) {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(error.request.response, "text/html");
+                const preElement = doc.querySelector("pre");
+                let preText = "No error details found";
+                
+                if (preElement) {
+                    preText = preElement.innerHTML.split("<br>")[0];
+                }
+
+                toast.error(preText || "Server error")
+            } else {
+                toast.error("Server error")
+            }
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    const handledFilteredQuery = async (filters: Record<string, string> = {}) => {
+        setShowFooter(false)
+        try {
+            const res = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/leads/allquery`, {
+                params: filters,
+                withCredentials: true
+            })
+            setLeads(res.data?.data)
+        } catch (error: unknown) {
             if (isAxiosError(error)) {
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(error.request.response, "text/html");
@@ -64,13 +154,16 @@ export default function Lead(){
     }
 
     useEffect(() => {
-        getLeads()
-    }, [])
+        getLeads(1)
+        setShowFooter(true)
+    }, [limit])
 
     return(
 
         <>
-        {showForm && <Leadform onClose={() => {setShowForm(false); getLeads()}} />}
+        {showForm && <Leadform onClose={() => {setShowForm(false); getLeads(1)}} />}
+        {showFilter && <FilterForm onClose={() => setShowFilter(false)} onApply={handledFilteredQuery} />}
+        {showEditForm &&  1 }
             <div className="w-full p-7" >
                 <div className="w-full h-16 flex justify-between items-center" >
                     <div>
@@ -78,9 +171,9 @@ export default function Lead(){
                         <p className="text-sm text-zinc-600" >Manage and track all your leads in one place.</p>
                     </div>
                     <div className="flex justify-end items-center space-x-3" >
-                        <Button variant={"secondary"} className="w-32 cursor-pointer" >
-                            <span> <Download className="w-5 h-5" /> </span>
-                            <p> Export </p>
+                        <Button variant={"secondary"} className="w-32 cursor-pointer" onClick={() => setShowFilter(true)} >
+                            <span> <Filter className="w-5 h-5" /> </span>
+                            <p> Filter </p>
                         </Button>
                         <Button className="cursor-pointer" onClick={() => setShowForm(true)} >
                             <span> <Plus className="w-5 h-5" /> </span>
@@ -89,30 +182,31 @@ export default function Lead(){
                     </div>
                 </div>
 
-                <div className="w-full h-auto p-5 mt-5 bg-white rounded-xl border border-orange-600/20 " >
-                    <div className="flex space-x-5" >
-                        <Input placeholder='Search leads by name, company or emails' className="w-1/2" />
-                        <Select>
-                            <SelectTrigger className="w-40">
-                                <SelectValue placeholder="Theme" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="light">Light</SelectItem>
-                                <SelectItem value="dark">Dark</SelectItem>
-                                <SelectItem value="system">System</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <Select>
-                            <SelectTrigger className="w-40">
-                                <SelectValue placeholder="Theme" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="light">Light</SelectItem>
-                                <SelectItem value="dark">Dark</SelectItem>
-                                <SelectItem value="system">System</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
+                <div className="w-full h-auto p-5 mt-5 bg-white rounded-xl border border-orange-600/20 flex space-x-5">
+                    <Input placeholder="Search leads by name, company, email, or city (press ENTER)" value={search} onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleSearchQuery(search)} />
+
+                    <Select value={String(limit)} onValueChange={(val) => setLimit(Number(val))}>
+                    <SelectTrigger className="w-80">
+                        <SelectValue placeholder="Limit" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="20">20</SelectItem>
+                        <SelectItem value="50">50</SelectItem>
+                        <SelectItem value="100">100</SelectItem>
+                    </SelectContent>
+                    </Select>
+
+                    <Button className="cursor-pointer" variant={"secondary"} onClick={() => setSearch("")} >
+                        <span>
+                            <Delete />
+                        </span>
+                        Clean
+                    </Button>
+                    <Button className="cursor-pointer" variant={"secondary"} onClick={() => {getLeads(1); setShowFooter(true)}} >
+                        <span>
+                            <RefreshCcw />
+                        </span>
+                    </Button>
                 </div>
 
                 <div className="mt-7" >
@@ -138,6 +232,7 @@ export default function Lead(){
                                     <th className="p-3">Score</th>
                                     <th className="p-3">Value</th>
                                     <th className="p-3">Qualified</th>
+                                    <th className="p-3 flex justify-center items-center"><MenuIcon /></th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -178,24 +273,37 @@ export default function Lead(){
                                                 <Badge className="bg-zinc-300 text-zinc-700">No</Badge>
                                             )}
                                             </td>
+                                            <td className="space-x-1.5" onClick={() => console.log("huhh")} >
+                                                <Button variant={"outline"}>
+                                                    <Pencil />
+                                                </Button>
+
+                                                <Button variant={"outline"} onClick={() => handleDeleteRecord(lead?._id)} >
+                                                    <Trash2 />
+                                                </Button>
+                                            </td>
                                         </tr>
                                         ))}
                                     </tbody>
-                                    </table>
-                                </div>
-                            <div className="flex justify-center items-center space-x-2 mt-5">
-                                <Button  variant="outline"  disabled={currentPage === 1}  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} >
-                                    Previous
-                                </Button>
-                                {[...Array(totalPages)].map((_, index) => (
-                                    <div key={index} onClick={() => setCurrentPage(index + 1)} className="size-7 px-1 border border-zinc-500/40 flex justify-center items-center rounded"  >
-                                        {index + 1}
-                                    </div>
-                                ))}
-                                <Button  variant="outline"  disabled={currentPage === totalPages}  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} >
-                                    Next
-                                </Button>
+                                </table>
                             </div>
+                            {
+                                showFooter && (
+                                    <>
+                                        <div className="flex justify-center items-center space-x-2 mt-5">
+                                            <Button className="cursor-pointer" variant="outline" disabled={page === 1} onClick={() => getLeads(page - 1)} >
+                                                Previous
+                                            </Button>
+                                            <div>
+                                                {page} / {totalPages} - {`${total} records`}
+                                            </div>
+                                            <Button className="cursor-pointer" variant="outline" disabled={page === totalPages} onClick={() => getLeads(page + 1)} >
+                                                Next
+                                            </Button>
+                                        </div>
+                                    </>
+                                )
+                            }
                         </>) 
                     }
                 </div>

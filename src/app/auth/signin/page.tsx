@@ -39,7 +39,7 @@ export default function Signin(){
             })
             if (res.status == 200) {
                 localStorage.setItem("fullName", res.data.data?.fullName)
-                router.push('/dashboard')
+                router.push('/leads')
                 reset()
             }
         } catch (error: unknown) {

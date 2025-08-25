@@ -24,17 +24,17 @@ export default function Sidebar(){
             icon: Users
         },
         {
-            links: "/analytics",
+            links: "#",
             name: "Analytics", 
             icon: TrendingUp
         },
         {
-            links: "/campaigns",
+            links: "#",
             name: "Campaigns", 
             icon: Target
         },
         {
-            links: "/settings",
+            links: "#",
             name: "Settings", 
             icon: Settings
         },

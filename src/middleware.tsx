@@ -19,5 +19,6 @@ export const config = {
         '/',
         '/auth/:path*',
         '/dashboard',
+        '/leads'
     ],
 }
