@@ -1,5 +1,6 @@
 "use client"
 
+import EditForm from "@/components/layout/EditForm";
 import FilterForm from "@/components/layout/FilterForm";
 import Leadform from "@/components/layout/LeadForm";
 import { Badge } from "@/components/ui/badge";
@@ -7,10 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import axios, { isAxiosError } from "axios";
-import { Delete, Filter, MenuIcon, Pencil, Plus, RefreshCcw, Trash2 } from "lucide-react";
+import { Delete, Filter, MenuIcon, Pencil, Plus, RefreshCcw, Trash2} from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { fa } from "zod/v4/locales";
 
 type Lead = {
     _id: string,
@@ -26,6 +26,7 @@ type Lead = {
     score?: string
     lead_value?: string
     is_qualified?: boolean
+    last_activity_at?: Date
 }
 
 export default function Lead(){
@@ -40,6 +41,8 @@ export default function Lead(){
     const [showFilter, setShowFilter] = useState(false)
     const [showFooter, setShowFooter ] = useState(true)
     const [showEditForm, setShowEditForm] = useState(false)
+
+    const [selectedLeadId, setSelectedLeadId] = useState("")
 
     const getLeads = async (page: number) => {
         setIsLoading(true)
@@ -163,7 +166,7 @@ export default function Lead(){
         <>
         {showForm && <Leadform onClose={() => {setShowForm(false); getLeads(1)}} />}
         {showFilter && <FilterForm onClose={() => setShowFilter(false)} onApply={handledFilteredQuery} />}
-        {showEditForm &&  1 }
+        {showEditForm && <EditForm onClose={() => setShowEditForm(false)} leadId={selectedLeadId} /> }
             <div className="w-full p-7" >
                 <div className="w-full h-16 flex justify-between items-center" >
                     <div>
@@ -273,7 +276,7 @@ export default function Lead(){
                                                 <Badge className="bg-zinc-300 text-zinc-700">No</Badge>
                                             )}
                                             </td>
-                                            <td className="space-x-1.5" onClick={() => console.log("huhh")} >
+                                            <td className="space-x-1.5" onClick={() => {setShowEditForm(true); setSelectedLeadId(lead?._id)}} >
                                                 <Button variant={"outline"}>
                                                     <Pencil />
                                                 </Button>
